@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FocusMirror — Your brain has a Focus Score. Do you know yours?</title>
+  <meta name="theme-color" content="#6C5CE7">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+<div class="bg-overlay"></div>
+
+<div class="notification" id="notification">
+  <div class="notif-title" id="notif-title">🎉</div>
+  <div class="notif-desc" id="notif-desc"></div>
+</div>
+
+<div class="badge-overlay" id="badgeOverlay" onclick="closeBadgePopup()"></div>
+<div class="new-badge-popup" id="badgePopup">
+  <div class="big-icon" id="bp-icon">🏆</div>
+  <div class="sub">🏅 Badge Unlocked!</div>
+  <div class="name" id="bp-name"></div>
+  <div class="desc" id="bp-desc"></div>
+  <button class="btn btn-primary btn-block" onclick="closeBadgePopup()">Awesome! 🎉</button>
+</div>
+
+<nav class="top-nav">
+  <div class="nav-left">
+    <div class="top-nav-brand" onclick="switchSection('home')">
+      <span class="brand-dot"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg></span>
+      <span class="bt">Focus <em>Mirror</em></span>
+    </div>
+  </div>
+
+  <div class="nav-center">
+    <button class="nav-link" onclick="scrollHome('how-it-works')">How it works</button>
+    <button class="nav-link" onclick="scrollHome('features')">Features</button>
+    <button class="nav-link" onclick="scrollHome('for-schools')">For Schools</button>
+  </div>
+
+  <div class="nav-right">
+    <span class="sync-badge off" id="sync-badge">○ Local only</span>
+    <span class="xp-pill" id="xp-pill">⭐ <span id="nav-level">1</span> · <span id="nav-xp">0</span> XP</span>
+    <button class="icon-btn" onclick="switchSection('dashboard')" title="Dashboard" aria-label="Dashboard">📊</button>
+    <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">🌓</button>
+
+    <div class="nav-user-wrap" id="nav-user-wrap">
+      <button class="nav-ghost" id="btn-signin" onclick="openAuth()">Sign in</button>
+      <button class="user-chip" id="user-chip" style="display:none" onclick="toggleUserMenu(event)">
+        <span class="user-av" id="user-av">U</span>
+        <span class="user-nm" id="user-nm">User</span>
+      </button>
+      <div class="user-menu" id="user-menu">
+        <div class="um-head">
+          <div class="n" id="um-name">User</div>
+          <div class="e" id="um-email">—</div>
+        </div>
+        <button class="um-item" onclick="switchSection('dashboard');closeUserMenu()">📊 Dashboard</button>
+        <button class="um-item" onclick="switchSection('history');closeUserMenu()">📈 My history</button>
+        <button class="um-item danger" onclick="signOut()">↩ Sign out</button>
+      </div>
+    </div>
+
+    <button class="nav-cta" onclick="switchSection('dashboard')">
+      Try Free
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </button>
+  </div>
+</nav>
+
+<div class="tabs-dock" id="tabsDock">
+  <span class="tabs-hint" aria-hidden="true">Menu
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+  </span>
+  <div class="tabs">
+  <button class="tab active" data-tab="home" onclick="switchSection('home')">🏠 Home</button>
+  <button class="tab" data-tab="dashboard" onclick="switchSection('dashboard')">📊 Dashboard</button>
+  <button class="tab" data-tab="techniques" onclick="switchSection('techniques')">🎯 Techniques</button>
+  <button class="tab" data-tab="braingym" onclick="switchSection('braingym')">🧠 Brain Gym</button>
+  <button class="tab" data-tab="music" onclick="switchSection('music')">🍹 Relax Bar</button>
+  <button class="tab" data-tab="checkpoints" onclick="switchSection('checkpoints')">🏅 Checkpoints <span class="count" id="cp-count">0</span></button>
+  <button class="tab" data-tab="leaderboard" onclick="switchSection('leaderboard')">🏆 Leaderboard</button>
+  <button class="tab" data-tab="history" onclick="switchSection('history')">📈 History</button>
+  </div>
+</div>
+
+<main class="main">
+
+
+  <!-- ═══════════════ HOME / LANDING ═══════════════ -->
+  <section class="section active" id="section-home">
+   <div class="home-wrap">
+    <div class="home-glow"></div>
+
+    <!-- HERO -->
+    <div class="home-hero">
+      <div class="hero-copy anim-up">
+        <div class="hero-pill"><i></i> AI-Powered · Free · No signup required</div>
+        <h1 class="hero-title">Your brain has a <span class="hero-accent">Focus Score.</span> Do you know yours?</h1>
+        <p class="hero-sub">FocusMirror uses your phone camera to track blink rate, posture and distractions in real time — and tells you exactly when your brain is done for the day.</p>
+        <div class="hero-cta">
+          <button class="btn btn-primary btn-hero" onclick="switchSection('dashboard')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
+            Start Tracking Free
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+          <button class="btn btn-ghost" onclick="scrollHome('how-it-works')">How it works</button>
+        </div>
+        <div class="hero-trust">
+          <span>🔒 <b>100% on-device</b> — video never uploads</span>
+          <span>⚡ <b>Works instantly</b> in your browser</span>
+        </div>
+      </div>
+
+      <!-- PHONE MOCKUP -->
+      <div class="phone-stage anim-up-d2">
+        <div class="phone-halo"></div>
+        <div class="phone">
+          <div class="ph-bars"><i class="on"></i><i class="on"></i><i class="half"></i><i></i><i></i></div>
+          <div class="ph-top">
+            <div class="ph-av"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg></div>
+            <div><div class="ph-name">focusmirror</div><div class="ph-sub">live · just now</div></div>
+            <div class="ph-pause"><svg viewBox="0 0 24 24"><rect x="7" y="5" width="3.5" height="14" rx="1"/><rect x="14" y="5" width="3.5" height="14" rx="1"/></svg></div>
+          </div>
+
+          <div class="ph-body">
+            <div class="ph-chip chip-blink">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></div>
+              <div><div class="k">Blink</div><div class="v">14/min</div></div>
+            </div>
+            <div class="ph-tile"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-8 4 16 3-8h6"/></svg></div>
+            <div class="ph-chip chip-posture">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-8 4 16 3-8h6"/></svg></div>
+              <div><div class="k">Posture</div><div class="v">Good</div></div>
+            </div>
+            <div class="ph-rail">
+              <div><div class="bt"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 5.6a5.5 5.5 0 00-7.8 0L12 6.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 22l7.8-7.6 1-1a5.5 5.5 0 000-7.8z"/></svg></div><small>1.2k</small></div>
+              <div><div class="bt"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 01-9 8.4 8.9 8.9 0 01-4-.9L3 21l1.9-4.9a8.4 8.4 0 01-.9-3.8 8.4 8.4 0 018.4-8.4h.6a8.4 8.4 0 018 8v.6z"/></svg></div><small>84</small></div>
+              <div><div class="bt"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></div><small>Share</small></div>
+            </div>
+            <div class="ph-chev">
+              <span><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></span>
+              <span><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+            </div>
+          </div>
+
+          <div class="ph-foot">
+            <div class="ph-eq" id="ph-eq"></div>
+            <div class="ph-k">Posture</div>
+            <div class="ph-good"><b>Good</b><em>spine angle 4°</em></div>
+            <div class="ph-line">Aligned &amp; open</div>
+            <div class="ph-note">Shoulders relaxed. Oxygen flow optimal for deep work.</div>
+            <div class="ph-dots"><i></i><i></i><i class="w"></i><i></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="home-sec" id="home-how-it-works">
+      <div class="home-sec-head">
+        <div class="section-badge">⚙️ How it works</div>
+        <h2>Three steps to a measured <span class="gradient-text">focus habit</span></h2>
+        <p>No wearables, no setup, no account. Open the camera and your session starts scoring itself.</p>
+      </div>
+      <div class="step-grid">
+        <div class="step-card">
+          <div class="step-num">STEP 01</div><div class="step-ico">📷</div>
+          <h3>Point your camera</h3>
+          <p>Allow camera access once. Face landmarks are detected locally in your browser — the video stream never leaves your device.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">STEP 02</div><div class="step-ico">🧠</div>
+          <h3>We read the signals</h3>
+          <p>Blink rate, spine angle, head tilt and screen distance are sampled continuously and fused into one live Focus Score.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">STEP 03</div><div class="step-ico">🔔</div>
+          <h3>Get told when to stop</h3>
+          <p>When fatigue markers spike, FocusMirror nudges you to rest, stretch or breathe — before burnout costs you the evening.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEATURES -->
+    <div class="home-sec" id="home-features">
+      <div class="home-sec-head">
+        <div class="section-badge">✨ Features</div>
+        <h2>Everything your focus needs, <span class="gradient-text">in one tab</span></h2>
+        <p>Tracking is only half of it — FocusMirror also gives you the tools to fix what it measures.</p>
+      </div>
+      <div class="feat-grid">
+        <div class="feat-card"><span class="fi">👁</span><h4>Blink & eye strain</h4><p>Live blink-rate monitoring catches dry-eye fatigue long before you feel it.</p></div>
+        <div class="feat-card"><span class="fi">🪑</span><h4>Posture scoring</h4><p>Spine angle and shoulder alignment scored every second, with instant corrections.</p></div>
+        <div class="feat-card"><span class="fi">🍅</span><h4>Focus techniques</h4><p>Pomodoro, time blocking, box breathing and brain dumps built right in.</p></div>
+        <div class="feat-card"><span class="fi">🧠</span><h4>Brain Gym</h4><p>AI hand-tracked finger drills that stimulate motor cortex and lift BDNF.</p></div>
+        <div class="feat-card"><span class="fi">🏅</span><h4>XP & checkpoints</h4><p>Levels, streaks and 20 unlockable badges keep the habit sticky.</p></div>
+        <div class="feat-card"><span class="fi">📈</span><h4>Session history</h4><p>Trend charts show whether your focus is actually improving week over week.</p></div>
+        <div class="feat-card"><span class="fi">🏆</span><h4>Leaderboards</h4><p>Compete on total XP and weekly rankings with classmates or colleagues.</p></div>
+        <div class="feat-card"><span class="fi">🔒</span><h4>Private by design</h4><p>All inference runs on-device. No frames, no uploads, no tracking pixels.</p></div>
+      </div>
+    </div>
+
+    <!-- FOR SCHOOLS -->
+    <div class="home-sec" id="home-for-schools">
+      <div class="school-box">
+        <div>
+          <div class="section-badge">🎓 For Schools</div>
+          <h2>Give every student a measurable attention advantage</h2>
+          <p>FocusMirror runs on the hardware schools already own — any laptop or tablet with a webcam. No installs, no per-device licensing, no student data leaving the classroom.</p>
+          <div class="school-list">
+            <span><em>✓</em> Zero-install: works from any modern browser</span>
+            <span><em>✓</em> Class leaderboards that make deep work competitive</span>
+            <span><em>✓</em> Posture &amp; eye-strain reporting for wellbeing programmes</span>
+            <span><em>✓</em> Fully offline inference — GDPR &amp; COPPA friendly by default</span>
+          </div>
+          <button class="btn btn-primary btn-hero" onclick="switchSection('leaderboard')">See class leaderboard →</button>
+        </div>
+        <div class="school-stats">
+          <div class="school-stat"><b>+32%</b><small>BDNF UPLIFT</small></div>
+          <div class="school-stat"><b>0</b><small>UPLOADS EVER</small></div>
+          <div class="school-stat"><b>24</b><small>SESSIONS/MONTH AVG</small></div>
+          <div class="school-stat"><b>20</b><small>BADGES TO EARN</small></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLOSING CTA -->
+    <div class="home-cta">
+      <h2>Find out your Focus Score in 30 seconds</h2>
+      <p>Free forever, no signup, nothing to install. Your camera stays yours.</p>
+      <button class="btn btn-primary btn-hero" onclick="switchSection('dashboard')">Start Tracking Free →</button>
+    </div>
+    <div class="home-foot">FocusMirror · Built on the FocusFlow engine · All processing happens on your device.</div>
+   </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section class="section" id="section-dashboard">
+    <div class="section-header anim-up">
+      <div class="section-badge">🎯 Live Tracking</div>
+      <h1>Your Focus <span class="gradient-text">Dashboard</span></h1>
+      <p>Real-time AI posture & blink tracking + all productivity methods in one place.</p>
+    </div>
+    <div class="xp-display anim-up-d1">
+      <div class="xp-level" id="level-badge">1</div>
+      <div class="xp-info">
+        <div class="xp-label">⭐ Level <span id="level-label">1</span> · <span id="xp-label">0</span> XP</div>
+        <div class="xp-bar-bg"><div class="xp-bar-fill" id="xp-bar-fill" style="width:0%"></div></div>
+        <div class="xp-numbers"><span id="xp-current">0</span><span id="xp-next">100</span></div>
+      </div>
+    </div>
+    <div class="dash-grid anim-up-d2">
+      <div class="dash-card"><div class="icon">🧠</div><div class="label">Focus Score</div><div class="value" id="dash-score" style="color:var(--primary)">--</div><div class="sub">out of 100</div></div>
+      <div class="dash-card"><div class="icon">🪑</div><div class="label">Posture</div><div class="value" id="dash-posture" style="color:var(--secondary)">--</div><div class="sub">score</div></div>
+      <div class="dash-card"><div class="icon">👁</div><div class="label">Blinks</div><div class="value" id="dash-blink" style="color:var(--gold)">--</div><div class="sub">total</div><div style="font-size:10px;color:var(--text-dim);margin-top:2px">Rate: <span id="blink-rate">0</span>/min</div></div>
+      <div class="dash-card"><div class="icon">⏱</div><div class="label">Session</div><div class="value" id="dash-session" style="color:var(--text-dim)">--</div><div class="sub">minutes</div></div>
+    </div>
+    <div class="cam-section anim-up-d3">
+      <div>
+        <div class="cam-wrap"><video id="video" autoplay muted playsinline></video><canvas id="overlay"></canvas><div class="cam-badge">LIVE</div></div>
+        <div class="cam-status" id="cam-status">Initializing camera...</div>
+        <div class="blink-tune">
+          <button class="btn btn-secondary btn-sm" onclick="recalibrateBlink()">↺ Recalibrate eyes</button>
+        </div>
+      </div>
+      <div>
+        <div class="name-box"><label>Your Name</label><input class="name-input" id="name-input" type="text" placeholder="Enter your name..." maxlength="20"></div>
+        <div class="cam-controls" style="display:flex;gap:8px;margin-bottom:10px">
+          <button class="btn btn-primary" id="start-btn" disabled onclick="startTracking()" style="flex:1">▶ Start</button>
+          <button class="btn btn-secondary" onclick="resetSession()" style="flex:1">↺ Reset</button>
+        </div>
+        <div class="bars-box">
+          <div class="bars-title">Live Biometrics</div>
+          <div class="bar-row"><span class="bar-name">Focus Score</span><span class="bar-num" id="b-score">0</span></div>
+          <div class="bar-track"><div class="bar-fill" id="bf-score" style="width:0%;background:var(--primary)"></div></div>
+          <div class="bar-row"><span class="bar-name">Posture</span><span class="bar-num" id="b-posture">0</span></div>
+          <div class="bar-track"><div class="bar-fill" id="bf-posture" style="width:0%;background:var(--secondary)"></div></div>
+          <div class="bar-row"><span class="bar-name">Blink Health</span><span class="bar-num" id="b-blink">0</span></div>
+          <div class="bar-track"><div class="bar-fill" id="bf-blink" style="width:0%;background:var(--gold)"></div></div>
+        </div>
+        <div class="alert-box" id="alert-box"><div class="alert-state" id="state-label">READY</div><div class="alert-msg" id="rec-text">Enter your name and press Start</div></div>
+        <!-- Desk Sensor feature: Arduino ultrasonic presence (toggleable) -->
+        <div class="ds-card" id="desk-sensor">
+          <div class="ds-head">
+            <div>
+              <div class="ds-title">Desk Sensor</div>
+              <div class="ds-sub" id="ds-desc">Arduino ultrasonic presence</div>
+            </div>
+            <button class="ds-switch" id="ds-switch" role="switch" aria-checked="false" aria-label="Toggle desk sensor"><span class="ds-knob"></span></button>
+          </div>
+          <div class="ds-body" id="ds-body" hidden>
+            <div class="ds-status-row">
+              <span class="ds-dot" id="ds-dot"></span>
+              <div>
+                <div class="ds-state" id="ds-state">Offline</div>
+                <div class="ds-meta" id="ds-meta">Arduino not connected</div>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-block" id="ds-btn" style="margin-top:12px">Connect Arduino</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-box anim-up-d4">
+      <div class="bars-title">Focus Trend</div>
+      <canvas id="focusChart" height="80"></canvas>
+    </div>
+  </section>
+
+  <!-- TECHNIQUES INDEX -->
+  <section class="section" id="section-techniques">
+    <div class="section-header anim-up">
+      <div class="section-badge">🎯 All Methods</div>
+      <h1>Focus <span class="gradient-text">Techniques</span></h1>
+      <p>Choose a method below. Each opens its dedicated timer with instructions.</p>
+    </div>
+    <div class="tech-grid anim-up-d1">
+      <div class="tech-card" onclick="openTechnique('pomodoro')">
+        <div class="tech-card-header"><div class="tech-icon">🍅</div><div><div class="tech-title">Pomodoro</div><div style="font-size:10px;color:var(--text-dim)">25 min sprints · 5 min breaks</div></div></div>
+        <div class="tech-desc">Work in focused 25-minute intervals with short breaks. The gold standard of time management.</div>
+        <div class="tech-meta"><span class="tech-tag">⏱ 25 min</span><span class="tech-tag gold">⭐ +50 XP</span><span class="tech-tag green" id="pom-stats-tech">0 sessions</span></div>
+      </div>
+      <div class="tech-card" onclick="openTechnique('timeblock')">
+        <div class="tech-card-header"><div class="tech-icon">📋</div><div><div class="tech-title">Time Blocking</div><div style="font-size:10px;color:var(--text-dim)">Custom blocks · Task-focused</div></div></div>
+        <div class="tech-desc">Divide your day into dedicated blocks. One task per block, move on only when time's up.</div>
+        <div class="tech-meta"><span class="tech-tag">⏱ 15-120 min</span><span class="tech-tag gold">⭐ +40 XP</span><span class="tech-tag green" id="tb-stats-tech">0 blocks</span></div>
+      </div>
+      <div class="tech-card" onclick="openTechnique('mindfulness')">
+        <div class="tech-card-header"><div class="tech-icon">🧘</div><div><div class="tech-title">Mindfulness</div><div style="font-size:10px;color:var(--text-dim)">Box breathing · Mental reset</div></div></div>
+        <div class="tech-desc">Guided 4-4-4-4 breathing meditation. Reset your focus in just 5 minutes.</div>
+        <div class="tech-meta"><span class="tech-tag">⏱ 5 min</span><span class="tech-tag gold">⭐ +30 XP</span><span class="tech-tag green" id="mind-stats-tech">0 sessions</span></div>
+      </div>
+      <div class="tech-card" onclick="openTechnique('taskdump')">
+        <div class="tech-card-header"><div class="tech-icon">📝</div><div><div class="tech-title">Brain Sweep</div><div style="font-size:10px;color:var(--text-dim)">Dump distractions · Clear mind</div></div></div>
+        <div class="tech-desc">Clear mental clutter by dumping every distracting thought onto a notepad.</div>
+        <div class="tech-meta"><span class="tech-tag">⏱ Anytime</span><span class="tech-tag gold">⭐ +10 XP</span><span class="tech-tag green" id="dump-stats-tech">0 thoughts</span></div>
+      </div>
+    </div>
+
+        <!-- TECHNIQUE TIMER VIEWS (shown one at a time) -->
+    <div id="technique-views" style="display:none">
+      <button class="btn btn-secondary btn-sm" onclick="closeTechnique()" style="margin-bottom:14px">← Back to Techniques</button>
+      
+      <!-- POMODORO VIEW -->
+      <div class="technique-view" id="view-pomodoro" style="display:none">
+        <div class="timers-grid">
+          <div class="timer-card" id="pom-card">
+            <div class="timer-card-header"><div class="timer-card-icon">🍅</div><div><div class="timer-card-title">Pomodoro Technique</div><div class="timer-card-sub" id="pom-phase">Focus Session</div></div></div>
+            <div class="timer-display"><div class="time" id="pom-display">25:00</div><div class="phase" id="pom-label">25 min work · 5 min break</div></div>
+            <div class="timer-controls"><button class="btn btn-primary" id="pom-start-btn" onclick="togglePomodoro()">▶ Start</button><button class="btn btn-secondary" onclick="resetPomodoro()">↺ Reset</button></div>
+            <div class="stats-row"><span class="mini-stat" id="pom-sessions">Sessions: 0</span><span class="mini-stat" id="pom-today">Today: 0 min</span></div>
+            <div style="margin-top:14px;padding:14px;background:rgba(0,206,201,0.06);border-radius:10px;font-size:12px;color:var(--text-muted);line-height:1.8">
+              <b style="color:var(--secondary)">How to use:</b><br>
+              1. Set timer for <b>25 minutes</b><br>
+              2. Work on a <b>single task</b> with no interruptions<br>
+              3. When timer rings — take a <b>5-minute break</b><br>
+              4. After 4 cycles, take a <b>15-30 min break</b>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- TIME BLOCKING VIEW -->
+      <div class="technique-view" id="view-timeblock" style="display:none">
+        <div class="timers-grid">
+          <div class="timer-card" id="tb-card">
+            <div class="timer-card-header"><div class="timer-card-icon">📋</div><div><div class="timer-card-title">Time Blocking</div><div class="timer-card-sub" id="tb-phase">Ready</div></div></div>
+            <div style="display:flex;gap:8px;margin-bottom:10px">
+              <input class="name-input" id="tb-task" placeholder="What will you work on?" style="flex:1;font-size:13px">
+              <select class="name-input" id="tb-duration" style="width:auto;font-size:12px"><option value="15">15m</option><option value="30" selected>30m</option><option value="45">45m</option><option value="60">1h</option><option value="90">1.5h</option><option value="120">2h</option></select>
+            </div>
+            <div class="timer-display"><div class="time" id="tb-display" style="font-size:42px">00:30:00</div><div class="phase" id="tb-label">Assign one task to this block</div></div>
+            <div class="timer-controls"><button class="btn btn-primary" id="tb-start-btn" onclick="toggleTimeBlock()">▶ Start Block</button><button class="btn btn-secondary" onclick="resetTimeBlock()">↺ Reset</button></div>
+            <div class="stats-row"><span class="mini-stat" id="tb-task-label">Task: —</span><span class="mini-stat" id="tb-blocks-today">Blocks: 0</span></div>
+            <div style="margin-top:14px;padding:14px;background:rgba(0,206,201,0.06);border-radius:10px;font-size:12px;color:var(--text-muted);line-height:1.8">
+              <b style="color:var(--secondary)">How to use:</b><br>
+              1. Divide your day into <b>specific blocks</b> of time<br>
+              2. Assign <b>one single task</b> to each block<br>
+              3. Work only on that task during the block<br>
+              4. Move to next task <b>only when block ends</b>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- MINDFULNESS VIEW -->
+      <div class="technique-view" id="view-mindfulness" style="display:none">
+        <div class="timers-grid">
+          <div class="timer-card" id="mind-card" style="text-align:center">
+            <div class="timer-card-header" style="justify-content:center"><div class="timer-card-icon">🧘</div></div>
+            <div class="timer-card-title" style="margin-bottom:8px">Mindfulness Meditation</div>
+            <div class="breath-circle"><div class="breath-circle-inner"><div class="breath-text" id="breath-text" style="color:var(--secondary)">Breathe In</div><div class="breath-sub" id="breath-sub">Through nose</div><div class="breath-count" id="breath-count">4</div></div></div>
+            <div class="timer-display"><div class="time" id="mind-display" style="font-size:40px">05:00</div><div class="phase" id="mind-label">5 min · 4-4-4-4 box breathing</div></div>
+            <div class="timer-controls" style="justify-content:center"><button class="btn btn-primary" id="mind-start-btn" onclick="toggleMindfulness()">🧘 Begin</button><button class="btn btn-secondary" onclick="resetMindfulness()">↺ Reset</button></div>
+            <div class="stats-row" style="justify-content:center"><span class="mini-stat" id="mind-cycles">Cycles: 0</span><span class="mini-stat" id="mind-total">Today: 0 min</span></div>
+            <div style="margin-top:14px;padding:14px;background:rgba(0,206,201,0.06);border-radius:10px;font-size:12px;color:var(--text-muted);line-height:1.8;text-align:left">
+              <b style="color:var(--secondary)">How to use:</b><br>
+              1. Sit quietly and <b>close your eyes</b><br>
+              2. Pay attention to your <b>natural breathing</b><br>
+              3. Inhale <b>4s</b> → Hold <b>4s</b> → Exhale <b>4s</b> → Hold <b>4s</b><br>
+              4. Gently bring your mind back when <b>thoughts wander</b>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- BRAIN SWEEP VIEW -->
+      <div class="technique-view" id="view-taskdump" style="display:none">
+        <div class="timers-grid">
+          <div class="timer-card task-dump" id="timer-taskdump">
+            <div class="timer-card-header"><div class="timer-card-icon">📝</div><div><div class="timer-card-title">Brain Sweep</div><div class="timer-card-sub">Dump all distractions here</div></div></div>
+            <div style="font-size:12px;color:var(--text-muted);line-height:1.8;margin-bottom:12px;padding:12px;background:rgba(255,255,255,0.02);border-radius:10px">
+              <b style="color:var(--gold)">How to use:</b> Keep this notepad next to you. Write down every random thought immediately. Don't act on them — just <b>acknowledge and return</b> to your main task worry-free.
+            </div>
+            <textarea id="task-dump-input" placeholder="What's on your mind? Write down random thoughts, to-dos, ideas, worries..."></textarea>
+            <div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-primary btn-sm" onclick="addDumpTask()" style="flex:1">➕ Add Thought</button><button class="btn btn-secondary btn-sm" onclick="clearDump()">🗑 Clear All</button></div>
+            <div class="task-entries" id="task-entries"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHECKPOINTS & BADGES -->
+  <section class="section" id="section-checkpoints">
+    <div class="section-header anim-up">
+      <div class="section-badge">🏅 Progression</div>
+      <h1>Checkpoints & <span class="gradient-text">Badges</span></h1>
+      <p>Earn XP, unlock checkpoints, level up, and collect achievement badges as you build your focus streak.</p>
+    </div>
+    <div class="xp-display anim-up-d1">
+      <div class="xp-level" id="level-badge2">1</div>
+      <div class="xp-info"><div class="xp-label">⭐ Level <span id="level-label2">1</span></div><div class="xp-bar-bg"><div class="xp-bar-fill" id="xp-bar-fill2" style="width:0%"></div></div><div class="xp-numbers"><span id="xp-current2">0</span> / <span id="xp-next2">100</span> XP</div></div>
+    </div>
+    <div class="checkpoint-grid anim-up-d2">
+      <div class="checkpoint-card">
+        <div class="checkpoint-header"><h3>📊 Focus Milestones</h3><span class="checkpoint-level" id="cp-level-badge">Bronze</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="cp-progress" style="width:0%"></div></div>
+        <div class="progress-labels"><span id="cp-done">0</span><span id="cp-total">12 checkpoints</span></div>
+        <div class="checkpoint-list" id="checkpoint-list"></div>
+      </div>
+      <div class="checkpoint-card">
+        <div class="checkpoint-header"><h3>🏅 Achievement Badges</h3><span class="checkpoint-level" id="badge-count">0 / 20</span></div>
+        <div class="badges-grid" id="badges-grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEADERBOARD -->
+  <section class="section" id="section-leaderboard">
+    <div class="section-header anim-up">
+      <div class="section-badge">🏆 Competition</div>
+      <h1>Global <span class="gradient-text">Leaderboard</span></h1>
+      <p>Compete with other students. The more focus sessions you complete, the higher you climb.</p>
+    </div>
+    <div class="lb-container anim-up-d1">
+      <div class="lb-card"><h3>🏆 Top Students <span class="lb-sub">by total XP</span></h3><div id="lb-global"><div class="lb-empty">No scores yet. Be the first!</div></div></div>
+      <div class="lb-card"><h3>🔥 Weekly Rankings <span class="lb-sub">resets Monday</span></h3><div id="lb-weekly"><div class="lb-empty">Start tracking to appear here!</div></div></div>
+    </div>
+    <div class="dash-grid anim-up-d2">
+      <div class="dash-card"><div class="icon">👑</div><div class="label">Your Rank</div><div class="value" id="lb-my-rank" style="color:var(--gold);font-size:28px">--</div><div class="sub">overall</div></div>
+      <div class="dash-card"><div class="icon">⭐</div><div class="label">Total XP</div><div class="value" id="lb-my-xp" style="color:var(--primary);font-size:28px">0</div></div>
+      <div class="dash-card"><div class="icon">🔥</div><div class="label">Best Streak</div><div class="value" id="lb-my-streak" style="color:var(--gold);font-size:28px">0</div></div>
+      <div class="dash-card"><div class="icon">🎯</div><div class="label">Avg Focus</div><div class="value" id="lb-my-avg" style="color:var(--secondary);font-size:28px">--</div></div>
+    </div>
+  </section>
+
+  <!-- HISTORY -->
+  <section class="section" id="section-history">
+    <div class="section-header anim-up">
+      <div class="section-badge">📊 Analytics</div>
+      <h1>Activity <span class="gradient-text">History</span></h1>
+      <p>Every session tracked, every badge earned — your complete focus journey.</p>
+    </div>
+    <div class="dash-grid anim-up-d1">
+      <div class="dash-card"><div class="icon">⏱</div><div class="label">Total Focus Time</div><div class="value" id="hist-total-time" style="color:var(--primary);font-size:24px">0 min</div></div>
+      <div class="dash-card"><div class="icon">🎯</div><div class="label">Avg Score</div><div class="value" id="hist-avg-score" style="color:var(--secondary);font-size:24px">--</div></div>
+      <div class="dash-card"><div class="icon">🔄</div><div class="label">Sessions</div><div class="value" id="hist-sessions" style="color:var(--gold);font-size:24px">0</div></div>
+      <div class="dash-card"><div class="icon">⚡</div><div class="label">Total XP</div><div class="value" id="hist-xp" style="color:var(--accent);font-size:24px">0</div></div>
+    </div>
+    <div class="chart-box anim-up-d2"><div class="bars-title">Session Log</div><div class="history-list" id="history-list"><div style="color:var(--text-dim);font-size:12px;text-align:center;padding:20px">No sessions yet. Start tracking!</div></div></div>
+  </section>
+
+  <!-- BRAIN GYM - HAND TRACKING FINGER EXERCISES -->
+  <section class="section" id="section-braingym">
+    <div class="section-header anim-up">
+      <div class="section-badge">🧠 Neural Activation</div>
+      <h1>Brain <span class="gradient-text">Gym</span></h1>
+      <p>Scientifically-proven finger exercises to stimulate neural pathways, boost BDNF, and sharpen your focus — guided by real-time AI hand tracking.</p>
+    </div>
+
+    <div class="hand-science-box anim-up-d1">
+      <h4>🧬 The Science</h4>
+      <p>Your fingers have the largest representation in the brain's <strong>somatosensory cortex</strong>. Studies from <strong>NIH</strong> show that patterned finger exercises increase <strong>BDNF (Brain-Derived Neurotrophic Factor)</strong> by up to 30%, enhance <strong>neuroplasticity</strong>, and improve <strong>prefrontal cortex activation</strong> — directly boosting focus, memory, and cognitive performance.
+      <br><br>
+      <span class="neural-badge">🧠 Motor Cortex</span>
+      <span class="neural-badge">⚡ Neural Plasticity</span>
+      <span class="neural-badge">💪 BDNF +32%</span>
+      <span class="neural-badge">🎯 Focus Enhancement</span>
+      </p>
+    </div>
+
+    <div class="exercise-grid anim-up-d2">
+      <div class="exercise-card active" data-exercise="tapping" id="ex-card-tapping">
+        <div class="exercise-card-header"><div class="exercise-icon">👆</div><div><div class="exercise-title">Finger Tapping</div><div style="font-size:10px;color:var(--text-dim)">Thumb-to-finger sequence</div></div></div>
+        <div class="exercise-desc">Rapidly tap thumb to each finger in sequence. This classic exercise boosts motor coordination and activates the prefrontal cortex.</div>
+        <div class="exercise-meta"><span class="exercise-tag">⏱ 30 sec</span><span class="exercise-tag gold">⭐ +25 XP</span><span class="exercise-tag green" id="tap-stats">0 reps</span></div>
+      </div>
+      <div class="exercise-card" data-exercise="opposition" id="ex-card-opposition">
+        <div class="exercise-card-header"><div class="exercise-icon">🤏</div><div><div class="exercise-title">Finger Opposition</div><div style="font-size:10px;color:var(--text-dim)">Hold & press each fingertip</div></div></div>
+        <div class="exercise-desc">Press thumb firmly to each fingertip and hold. Builds fine motor control and strengthens neural pathways between hemispheres.</div>
+        <div class="exercise-meta"><span class="exercise-tag">⏱ 20 sec</span><span class="exercise-tag gold">⭐ +20 XP</span><span class="exercise-tag green" id="opp-stats">0 reps</span></div>
+      </div>
+      <div class="exercise-card" data-exercise="roll" id="ex-card-roll">
+        <div class="exercise-card-header"><div class="exercise-icon">🎹</div><div><div class="exercise-title">Finger Roll</div><div style="font-size:10px;color:var(--text-dim)">Sequential finger lift</div></div></div>
+        <div class="exercise-desc">Lift each finger one at a time like playing piano. Activates the cerebellar-thalamic circuit and enhances neural connectivity.</div>
+        <div class="exercise-meta"><span class="exercise-tag">⏱ 25 sec</span><span class="exercise-tag gold">⭐ +25 XP</span><span class="exercise-tag green" id="roll-stats">0 reps</span></div>
+      </div>
+      <div class="exercise-card" data-exercise="fist" id="ex-card-fist">
+        <div class="exercise-card-header"><div class="exercise-icon">✊</div><div><div class="exercise-title">Fist Pump</div><div style="font-size:10px;color:var(--text-dim)">Open/close rhythmic</div></div></div>
+        <div class="exercise-desc">Rhythmic fist opening and closing. Increases cerebral blood flow, releases dopamine, and activates the basal ganglia motor loop.</div>
+        <div class="exercise-meta"><span class="exercise-tag">⏱ 20 sec</span><span class="exercise-tag gold">⭐ +15 XP</span><span class="exercise-tag green" id="fist-stats">0 reps</span></div>
+      </div>
+    </div>
+
+    <div class="hand-section anim-up-d3">
+      <div>
+        <div class="hand-cam-wrap">
+          <video id="handVideo" autoplay muted playsinline></video>
+          <canvas id="handOverlay"></canvas>
+          <div class="hand-badge">🤚 HAND TRACKING</div>
+        </div>
+        <div class="hand-status" id="handStatus">Loading hand tracking model...</div>
+        <div class="exercise-controls">
+          <button class="btn btn-primary" id="handStartBtn" onclick="startHandExercise()">▶ Start Exercise</button>
+          <button class="btn btn-secondary" onclick="resetHandExercise()">↺ Reset</button>
+        </div>
+      </div>
+      <div>
+        <div class="glass-card" style="padding:20px;text-align:center">
+          <div class="exercise-display">
+            <div class="exercise-instruction" id="handInstruction">Select an exercise and press <strong>Start</strong></div>
+            <div id="handSubInstruction" style="font-size:13px;color:var(--text-muted);margin-bottom:8px">Your hand will be tracked in real-time</div>
+            <div class="exercise-progress" id="handProgress"></div>
+            <div class="exercise-score" id="handScoreDisplay">Reps: 0 &middot; Score: 0%</div>
+            <div id="handTimer" style="font-size:11px;color:var(--text-dim);margin-top:6px;font-family:var(--font-mono)"></div>
+          </div>
+          <div class="hand-visual" id="handVisual">
+            <svg class="hand-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+              <!-- Simplified hand silhouette -->
+              <ellipse cx="100" cy="180" rx="55" ry="20" fill="rgba(108,92,231,0.08)" stroke="rgba(108,92,231,0.2)" stroke-width="1.5"/>
+              <!-- Palm -->
+              <ellipse cx="100" cy="130" rx="40" ry="45" fill="rgba(108,92,231,0.06)" stroke="rgba(108,92,231,0.15)" stroke-width="1.5"/>
+              <!-- Thumb -->
+              <g id="finger-thumb" class="finger-point" transform="translate(38,95) rotate(-45 10 30)">
+                <rect x="5" y="0" width="16" height="45" rx="8" ry="8"/>
+                <circle cx="13" cy="0" r="10"/>
+              </g>
+              <!-- Index -->
+              <g id="finger-index" class="finger-point" transform="translate(68,50)">
+                <rect x="5" y="0" width="14" height="55" rx="7" ry="7"/>
+                <circle cx="12" cy="0" r="9"/>
+              </g>
+              <!-- Middle -->
+              <g id="finger-middle" class="finger-point" transform="translate(90,42)">
+                <rect x="5" y="0" width="14" height="62" rx="7" ry="7"/>
+                <circle cx="12" cy="0" r="9"/>
+              </g>
+              <!-- Ring -->
+              <g id="finger-ring" class="finger-point" transform="translate(112,50)">
+                <rect x="5" y="0" width="14" height="55" rx="7" ry="7"/>
+                <circle cx="12" cy="0" r="9"/>
+              </g>
+              <!-- Pinky -->
+              <g id="finger-pinky" class="finger-point" transform="translate(133,65)">
+                <rect x="5" y="0" width="12" height="42" rx="6" ry="6"/>
+                <circle cx="11" cy="0" r="8"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ RELAX BAR · BRAIN GAMES ═══════════════ -->
+  <section class="section" id="section-music">
+    <div class="section-header anim-up">
+      <div class="section-badge">🍹 Relax Bar</div>
+      <h1>The <span class="gradient-text">Relax Bar</span></h1>
+      <p>Short brain-training breaks between study sessions. Sharpen working memory and logic — capped at 5 minutes so it stays a break, not a distraction.</p>
+    </div>
+
+    <div class="rb-gate anim-up-d1" id="rb-gate">
+      <div class="ic" id="rb-gate-ic">🔒</div>
+      <div>
+        <div class="tt" id="rb-gate-title">Checking session status…</div>
+        <div class="ds" id="rb-gate-desc">The Relax Bar opens before you start a focus session, or once you've finished one.</div>
+      </div>
+    </div>
+
+    <div class="rb-budget anim-up-d1" id="rb-budget">
+      <span class="lab">Break time left</span>
+      <div class="rb-bar"><div class="rb-fill" id="rb-fill" style="width:100%"></div></div>
+      <span class="rb-clock" id="rb-clock">5:00</span>
+      <button class="btn btn-secondary btn-sm" onclick="rbResetBudget()" title="Reset today's break allowance">↺</button>
+    </div>
+
+    <div class="game-grid anim-up-d2" id="game-grid">
+      <div class="game-card" data-game="sudoku">
+        <span class="gi">🔢</span>
+        <h3>Mini Sudoku</h3>
+        <p>A 9×9 logic puzzle. Trains working memory, pattern recognition and patient reasoning.</p>
+        <span class="gtag">Logic · Working memory</span>
+      </div>
+      <div class="game-card" data-game="memory">
+        <span class="gi">🧩</span>
+        <h3>Memory Match</h3>
+        <p>Flip and pair the symbols. Strengthens short-term recall and visual attention.</p>
+        <span class="gtag">Recall · Attention</span>
+      </div>
+    </div>
+
+    <div class="game-stage anim-up-d3" id="game-stage">
+      <div class="gs-empty" id="gs-empty">
+        <div class="big">🧠</div>
+        <div class="t">Pick a game to begin</div>
+        <div class="s">Your 5-minute break timer starts when the first game opens and pauses the moment you leave.</div>
+      </div>
+      <div id="gs-body" style="display:none"></div>
+    </div>
+
+    <div class="rb-soon anim-up-d4">
+      <div class="em">🚀</div>
+      <h3>More brain-teasing games coming soon</h3>
+      <p>We're building out the Relax Bar with more short, science-backed puzzles to sharpen different mental muscles between study sessions.</p>
+      <div class="chips">
+        <span class="chip">🔤 Word Scramble</span>
+        <span class="chip">🎯 Reaction Trainer</span>
+        <span class="chip">🔺 Pattern Logic</span>
+        <span class="chip">🔢 N-Back Challenge</span>
+        <span class="chip">♟ Chess Puzzles</span>
+      </div>
+    </div>
+  </section>
+
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.2.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js"></script>
+<!-- FaceMesh: 468 landmarks incl. real upper/lower eyelids — required for genuine
+     blink detection. blazeface alone returns only 6 coarse points (eye CENTRES,
+     no lids), which makes eye-openness mathematically unmeasurable.
+     The MediaPipe WASM solution is loaded too: measured ~80ms/frame (12fps)
+     versus ~600ms (1.7fps) for the TFJS CPU path when WebGL is unavailable.
+     Blink capture is frame-rate bound, so this difference decides whether
+     blinks are detectable at all. -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/face_mesh.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection@1.0.5/dist/face-landmarks-detection.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection@2.0.1/dist/hand-pose-detection.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" crossorigin="anonymous"></script>
+
+<div class="auth-overlay" id="auth-overlay" onclick="closeAuth()"></div>
+<div class="auth-modal" id="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+  <button class="auth-close" onclick="closeAuth()" aria-label="Close">&times;</button>
+  <div class="auth-mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg></div>
+  <h2 id="auth-title">Welcome back</h2>
+  <div class="auth-sub" id="auth-sub">Sign in to sync your focus sessions, XP and streaks.</div>
+
+  <form id="auth-form" onsubmit="return submitAuth(event)">
+    <div class="auth-field" id="field-name" style="display:none">
+      <label for="auth-name">Name</label>
+      <input type="text" id="auth-name" autocomplete="name" placeholder="Your name" maxlength="30">
+    </div>
+    <div class="auth-field">
+      <label for="auth-email">Email</label>
+      <input type="email" id="auth-email" autocomplete="email" placeholder="you@example.com" required>
+    </div>
+    <div class="auth-field">
+      <label for="auth-pass">Password</label>
+      <input type="password" id="auth-pass" autocomplete="current-password" placeholder="••••••••" required minlength="6">
+    </div>
+    <div class="auth-err" id="auth-err"></div>
+    <button type="submit" class="auth-submit" id="auth-submit">Sign in</button>
+  </form>
+
+  <div class="auth-swap" id="auth-swap">
+    New here? <b onclick="setAuthMode('signup')">Create an account</b>
+  </div>
+  <div class="auth-note">
+    🔒 Passwords are hashed and stored by Supabase — this app never sees them. Your progress syncs to your account.
+  </div>
+</div>
+
+<!-- ── Supabase (must load before config/auth/sync) ── -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.9/dist/umd/supabase.js"></script>
+
+<!-- ── app modules ── -->
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/desksensor.js"></script>
+<script src="js/braingym.js"></script>
+<script src="js/games.js"></script>
+<script src="js/landing.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/sync.js"></script>
+</body>
+</html>
