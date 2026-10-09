@@ -144,6 +144,7 @@ window.DeskSensor = (() => {
       console.warn('DeskSensor connect failed:', e);
       connected = false;
       render();
+      els.meta.textContent = (e && e.name ? e.name + ': ' : '') + (e && e.message ? e.message : String(e));
     }
   }
 
