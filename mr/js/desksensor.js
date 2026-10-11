@@ -38,9 +38,9 @@ window.DeskSensor = (() => {
     btn:    document.getElementById('ds-btn'),
   };
 
-  let port = null, reader = null;
+  let port = null, reader = null, writer = null, scoreTimer = null;
   let connected = false, remote = false, enabled = false;
-  const state = { present: null, distance: null };
+  const state = { present: null, distance: null, noise: null };
 
   function supported() { return 'serial' in navigator; }
 
@@ -71,7 +71,8 @@ window.DeskSensor = (() => {
       els.btn.style.display = '';
     } else {
       els.state.textContent = p ? 'At your desk' : 'Desk empty';
-      els.meta.textContent = state.distance != null ? state.distance + ' cm from sensor' : '—';
+      const nl = noiseLabel();
+      els.meta.textContent = (state.distance != null ? state.distance + ' cm from sensor' : '—') + (nl ? ' · ' + nl : '');
       els.btn.style.display = '';
     }
     els.btn.textContent = connected && !remote ? 'Disconnect' : 'Connect Arduino';
@@ -107,6 +108,30 @@ window.DeskSensor = (() => {
         emit();
       }
       render();
+        } else if (line.startsWith('Distance:')) {
+      // also accepts desk_presence_simple.ino:
+      //   "Distance: 42 cm  ->  PERSON AT DESK"  |  "desk empty"
+      const m = line.match(/Distance:\s*(-?\d+)/);
+      if (m) {
+        const d = parseInt(m[1], 10);
+        if (!isNaN(d) && d > 0) state.distance = d;
+      }
+      let present = null;
+      if (/PERSON AT DESK/i.test(line)) present = true;
+      else if (/desk empty/i.test(line)) present = false;
+      else if (m) {
+        const d2 = parseInt(m[1], 10);
+        present = (d2 > 0 && d2 <= 70);
+      }
+      if (present !== null && present !== state.present) {
+        state.present = present;
+        emit();
+      }
+      render();
+    } else if (line.startsWith('NOISE:')) {
+      const n = parseInt(line.slice(6), 10);
+      if (!isNaN(n)) state.noise = Math.max(0, Math.min(100, n));
+      render();
     }
   }
 
@@ -132,6 +157,35 @@ window.DeskSensor = (() => {
     if (connected) disconnect();
   }
 
+  function noiseLabel() {
+    const n = state.noise;
+    if (n == null) return '';
+    if (n < 25) return '\u{1F3A3} Quiet (' + n + ')';
+    if (n < 60) return '\u{1F3A3} Noise ' + n;
+    return '\u{1F3A3} LOUD room (' + n + ')';
+  }
+
+  /* Sends the live camera Focus Score down the USB cable as "S<0-100>",
+     so the LCD shows it and the buzzer can react. Reads the same number
+     the dashboard shows (#b-score) once per second. */
+  function startScoreWriter() {
+    stopScoreWriter();
+    scoreTimer = setInterval(() => {
+      if (!connected || !writer) return;
+      const el = document.getElementById('b-score');
+      if (!el) return;
+      const v = parseInt(el.textContent, 10);
+      if (!isNaN(v) && v >= 0 && v <= 100) {
+        try { writer.write('S' + v + '\n'); } catch (e) {}
+      }
+    }, 1000);
+  }
+
+  async function stopScoreWriter() {
+    if (scoreTimer) { clearInterval(scoreTimer); scoreTimer = null; }
+    if (writer) { try { await writer.close(); } catch (e) {} writer = null; }
+  }
+
   async function connect() {
     try {
       // This is the browser prompt asking for access to the serial port.
@@ -140,15 +194,21 @@ window.DeskSensor = (() => {
       connected = true;
       render();
       readLoop();
+      try {   // one-way link: website -> Arduino ("S<score>")
+        const enc = new TextEncoderStream();
+        enc.readable.pipeTo(port.writable);
+        writer = enc.writable.getWriter();
+        startScoreWriter();
+      } catch (e) { console.warn('DeskSensor write setup failed:', e); }
     } catch (e) {
       console.warn('DeskSensor connect failed:', e);
       connected = false;
       render();
-      els.meta.textContent = (e && e.name ? e.name + ': ' : '') + (e && e.message ? e.message : String(e));
     }
   }
 
   async function disconnect() {
+    await stopScoreWriter();
     try { if (reader) await reader.cancel(); } catch (e) {}
     try { if (port) await port.close(); } catch (e) {}
     connected = false; port = null; reader = null;
