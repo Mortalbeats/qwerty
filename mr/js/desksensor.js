@@ -76,6 +76,7 @@ window.DeskSensor = (() => {
       els.btn.style.display = '';
     }
     els.btn.textContent = connected && !remote ? 'Disconnect' : 'Connect Arduino';
+    updateNoiseUI();
   }
 
   async function setEnabled(on) {
@@ -155,6 +156,49 @@ window.DeskSensor = (() => {
       console.warn('DeskSensor read error:', e);
     }
     if (connected) disconnect();
+  }
+
+  /* ---- Room Noise UI (injected with JS, so index.html needs no edits) ---- */
+  let noiseRow = null, noiseFill = null, noiseTxt = null;
+  function ensureNoiseUI() {
+    const body = document.getElementById('ds-body');
+    if (!body || document.getElementById('ds-noise-row')) return;
+    noiseRow = document.createElement('div');
+    noiseRow.id = 'ds-noise-row';
+    noiseRow.style.cssText = 'margin-top:12px';
+    const label = document.createElement('div');
+    label.textContent = 'ROOM NOISE';
+    label.style.cssText = 'font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;font-weight:700;font-family:var(--font-grotesk);margin-bottom:6px';
+    const track = document.createElement('div');
+    track.style.cssText = 'height:6px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden';
+    noiseFill = document.createElement('div');
+    noiseFill.style.cssText = 'height:100%;width:0%;background:var(--secondary);transition:width .3s,background .3s';
+    track.appendChild(noiseFill);
+    noiseTxt = document.createElement('div');
+    noiseTxt.style.cssText = 'font-size:11px;color:var(--text-muted);margin-top:4px';
+    noiseTxt.textContent = '\u2014';
+    noiseRow.appendChild(label); noiseRow.appendChild(track); noiseRow.appendChild(noiseTxt);
+    const btn = document.getElementById('ds-btn');
+    if (btn && btn.parentNode === body) body.insertBefore(noiseRow, btn);
+    else body.appendChild(noiseRow);
+  }
+  function updateNoiseUI() {
+    if (!connected) {
+      if (noiseRow && noiseRow.parentNode) noiseRow.parentNode.removeChild(noiseRow);
+      noiseRow = null; noiseFill = null; noiseTxt = null;
+      return;
+    }
+    ensureNoiseUI();
+    if (!noiseFill || !noiseTxt) return;
+    const n = state.noise;
+    if (n == null) {
+      noiseTxt.textContent = 'waiting for mic data\u2026';
+      noiseFill.style.width = '0%';
+      return;
+    }
+    noiseTxt.textContent = noiseLabel();
+    noiseFill.style.width = Math.max(2, Math.min(100, n)) + '%';
+    noiseFill.style.background = n < 25 ? 'var(--secondary)' : n < 60 ? 'var(--gold)' : 'var(--danger)';
   }
 
   function noiseLabel() {
